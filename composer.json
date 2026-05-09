@@ -21,6 +21,13 @@
             "Xhubio\\InvoiceApiXhub\\Tests\\": "tests/"
         }
     },
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": false,
+            "symfony/flex": false,
+            "composer/package-versions-deprecated": false
+        }
+    },
     "extra": {
         "shopware-plugin-class": "Xhubio\\InvoiceApiXhub\\InvoiceApiXhub",
         "label": {
