@@ -1,0 +1,26 @@
+{#
+ # Wave 7C — Customer-Portal Invoice Download
+ #
+ # Twig extension for the customer-account order-detail page. Adds a
+ # "Download invoice" link inside the order's actions block when the order
+ # has an Invoice-api.xhub generated file attached (custom field
+ # `invoice_api_xhub_filepath` is set).
+ #
+ # The actual storefront block path Shopware exposes for that area is
+ # `page_account_order_item_actions` (Shopware 6.6/6.7); merchants on a
+ # different theme can override this template at the same path.
+ #}
+{% sw_extends '@Storefront/storefront/page/account/order-history/order-detail-list.html.twig' %}
+
+{% block page_account_order_item_actions %}
+    {{ parent() }}
+
+    {% if order.customFields and order.customFields.invoice_api_xhub_filepath %}
+        <a href="{{ path('frontend.account.invoice-api-xhub.download', { orderId: order.id }) }}"
+           class="btn btn-light invoice-api-xhub-download-link"
+           rel="nofollow"
+           data-invoice-api-xhub-download="true">
+            {{ "invoice-api-xhub.account.downloadInvoice"|trans({}, 'storefront')|default('Download invoice') }}
+        </a>
+    {% endif %}
+{% endblock %}

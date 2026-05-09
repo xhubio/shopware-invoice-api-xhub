@@ -12,10 +12,22 @@
         <testsuite name="service">
             <directory>tests/Service</directory>
         </testsuite>
+        <testsuite name="subscriber">
+            <directory>tests/Subscriber</directory>
+        </testsuite>
+        <testsuite name="storefront">
+            <directory>tests/Storefront</directory>
+        </testsuite>
+        <testsuite name="enum">
+            <directory>tests/Enum</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory suffix=".php">src/Service</directory>
+            <directory suffix=".php">src/Subscriber</directory>
+            <directory suffix=".php">src/Storefront</directory>
+            <directory suffix=".php">src/Enum</directory>
         </include>
     </source>
     <coverage>

@@ -1,0 +1,7 @@
+{
+    "invoice-api-xhub": {
+        "account": {
+            "downloadInvoice": "Rechnung herunterladen"
+        }
+    }
+}

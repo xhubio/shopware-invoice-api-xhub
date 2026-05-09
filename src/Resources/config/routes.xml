@@ -10,4 +10,10 @@
         resource declaration also works on older 6.5 builds without changes.
     -->
     <import resource="../../Controller/Admin" type="attribute"/>
+
+    <!--
+        Wave 7C: storefront controllers (customer-portal invoice download).
+        Same attribute-loader pattern as the admin import above.
+    -->
+    <import resource="../../Storefront/Controller" type="attribute"/>
 </routes>

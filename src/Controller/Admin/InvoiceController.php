@@ -14,7 +14,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Xhubio\InvoiceApiXhub\Enum\InvoiceType;
 use Xhubio\InvoiceApiXhub\MessageQueue\GenerateInvoiceMessage;
+use Xhubio\InvoiceApiXhub\Service\AuditLogger;
 use Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage;
 
 /**
@@ -54,6 +56,7 @@ class InvoiceController
         private readonly InvoiceFileStorage $fileStorage,
         private readonly EntityRepository $orderRepository,
         private readonly LoggerInterface $logger,
+        private readonly ?AuditLogger $auditLogger = null,
     ) {
     }
 
@@ -66,7 +69,7 @@ class InvoiceController
     public function regenerate(RequestDataBag $body, Context $context): JsonResponse
     {
         $orderId = (string) $body->get('orderId', '');
-        $type = (string) $body->get('type', 'invoice');
+        $typeRaw = (string) $body->get('type', InvoiceType::Invoice->value);
 
         // Shopware UUIDs are hex32 (no dashes). Validate strictly so we never
         // pass user-controlled input through to the repository or the queue.
@@ -77,7 +80,8 @@ class InvoiceController
             );
         }
 
-        if (!in_array($type, ['invoice', 'credit_note'], true)) {
+        $type = InvoiceType::tryFrom($typeRaw);
+        if (null === $type) {
             return new JsonResponse(
                 ['success' => false, 'message' => 'Invalid type'],
                 Response::HTTP_BAD_REQUEST,
@@ -101,7 +105,7 @@ class InvoiceController
 
         $this->logger->info('invoice-api-xhub: regenerate queued', [
             'orderId' => $orderId,
-            'type' => $type,
+            'type' => $type->value,
         ]);
 
         return new JsonResponse([
@@ -181,9 +185,19 @@ class InvoiceController
     )]
     public function logs(string $orderId, Context $context): JsonResponse
     {
-        // MVP: derive a synthetic "current state" log from the order's
-        // custom-fields so the Vue Logs tab has something to render. A real
-        // append-only audit log (separate plugin table) is Phase 1.x.
+        // Wave 7D: prefer the real audit table; fall back to the
+        // synthesised-from-customFields entry only when the audit table is
+        // empty AND a generated filename is present on the order. That
+        // covers the migration window: orders generated before this plugin
+        // version still show ONE entry instead of going dark.
+        $auditEntries = null !== $this->auditLogger
+            ? $this->auditLogger->getEntries($orderId)
+            : [];
+
+        if ([] !== $auditEntries) {
+            return new JsonResponse(['entries' => $auditEntries], Response::HTTP_OK);
+        }
+
         $criteria = new Criteria([$orderId]);
         $order = $this->orderRepository->search($criteria, $context)->first();
 

@@ -11,6 +11,7 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
+use Xhubio\InvoiceApiXhub\Enum\InvoiceType;
 
 /**
  * Orchestrator for invoice generation — Shopware analogue of the WooCommerce
@@ -72,6 +73,8 @@ final class InvoiceGenerator
         private readonly SystemConfigService $config,
         private readonly EntityRepository $orderRepository,
         private readonly LoggerInterface $logger,
+        private readonly ?ViesValidator $viesValidator = null,
+        private readonly ?AuditLogger $auditLogger = null,
     ) {
     }
 
@@ -80,19 +83,32 @@ final class InvoiceGenerator
      *
      * @return array{success:bool,message:string,filename?:?string,skipped?:bool}
      */
-    public function generate(string $orderId, Context $context, string $type = 'invoice'): array
+    public function generate(string $orderId, Context $context, InvoiceType $type = InvoiceType::Invoice): array
     {
-        $logCtx = ['source' => self::LOG_SOURCE, 'orderId' => $orderId, 'type' => $type];
+        $logCtx  = ['source' => self::LOG_SOURCE, 'orderId' => $orderId, 'type' => $type->value];
+        $started = microtime(true);
+        // Action key in the audit table — `credit_note` for refund flow,
+        // `generate` (or `regenerate`, identical from the audit POV) otherwise.
+        $action = InvoiceType::CreditNote === $type ? 'credit_note' : 'generate';
 
         $order = $this->loadOrder($orderId, $context);
         if (!$order instanceof OrderEntity) {
             $msg = sprintf('Order %s not found.', $orderId);
             $this->logger->warning($msg, $logCtx);
+            // We deliberately do NOT audit-log a missing order: the
+            // invoice_api_xhub_audit FK requires an existing order row,
+            // so the INSERT would just fail and add noise to the log.
 
             return ['success' => false, 'skipped' => false, 'message' => $msg];
         }
 
-        $configValues = $this->loadConfig();
+        // Sales-channel-aware config (Wave 7D). When a Shopware override
+        // exists for the order's sales channel, SystemConfigService::get()
+        // returns the merged channel-specific values; otherwise it falls
+        // back to the global config. Multi-storefront merchants can now
+        // run e.g. a German XRechnung channel and an Austrian ebInterface
+        // channel from a single plugin install.
+        $configValues = $this->loadConfig($order->getSalesChannelId());
 
         $apiKey  = isset($configValues['apiKey']) ? trim((string) $configValues['apiKey']) : '';
         $baseUrl = isset($configValues['baseUrl']) && '' !== trim((string) $configValues['baseUrl'])
@@ -103,6 +119,10 @@ final class InvoiceGenerator
             $msg = 'API key is not configured. Open Invoice-api.xhub settings to add it.';
             $this->logger->warning($msg, $logCtx);
             $this->persistError($orderId, $context, $order, $msg);
+            $this->audit($orderId, $action, 'error', [
+                'errorMessage' => $msg,
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => false, 'message' => $msg];
         }
@@ -114,6 +134,10 @@ final class InvoiceGenerator
         $lineItems = $order->getLineItems();
         if (null === $lineItems || 0 === \count($lineItems)) {
             $this->logger->info('skipped: no line items', $logCtx);
+            $this->audit($orderId, $action, 'skipped', [
+                'errorMessage' => 'no line items',
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => true, 'message' => 'no line items'];
         }
@@ -126,8 +150,45 @@ final class InvoiceGenerator
                 array_merge($logCtx, ['exception' => $e]),
             );
             $this->persistError($orderId, $context, $order, $e->getMessage());
+            $this->audit($orderId, $action, 'error', [
+                'errorMessage' => $e->getMessage(),
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => false, 'message' => $e->getMessage()];
+        }
+
+        // VIES VAT-ID pre-validation (Wave 7C). Toggle defaults to false so
+        // existing installs are unaffected; when enabled and the buyer carries
+        // a VAT-ID for an EU country, we ask VIES whether the number is still
+        // valid. A negative answer aborts the generate and persists a clear
+        // last_error so the merchant can see why nothing was created. The
+        // validator itself fails open on transport errors, so a flaky VIES
+        // never blocks a sale silently.
+        if (
+            null !== $this->viesValidator
+            && !empty($configValues['validateVatBeforeGenerate'])
+        ) {
+            $buyerRaw = $payload['buyer'] ?? null;
+            /** @var array<string,mixed> $buyer */
+            $buyer        = is_array($buyerRaw) ? $buyerRaw : [];
+            $buyerCountry = isset($buyer['countryCode']) ? (string) $buyer['countryCode'] : '';
+            $buyerVatId   = isset($buyer['vatId']) ? (string) $buyer['vatId'] : '';
+
+            if ('' !== $buyerVatId && '' !== $buyerCountry) {
+                $isValid = $this->viesValidator->validate($buyerCountry, $buyerVatId);
+                if (!$isValid) {
+                    $msg = sprintf('VAT-ID validation failed: %s', $buyerVatId);
+                    $this->logger->warning($msg, $logCtx);
+                    $this->persistError($orderId, $context, $order, $msg);
+                    $this->audit($orderId, $action, 'error', [
+                        'errorMessage' => $msg,
+                        'durationMs'   => $this->elapsedMs($started),
+                    ]);
+
+                    return ['success' => false, 'skipped' => false, 'message' => $msg];
+                }
+            }
         }
 
         $templateId = $this->templateResolver->resolve($order, $configValues);
@@ -162,6 +223,11 @@ final class InvoiceGenerator
                 ]),
             );
             $this->persistError($orderId, $context, $order, $e->getMessage());
+            $this->audit($orderId, $action, 'error', [
+                'format'       => $format,
+                'errorMessage' => $e->getMessage(),
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => false, 'message' => $e->getMessage()];
         }
@@ -174,6 +240,11 @@ final class InvoiceGenerator
             $msg = $this->apiClient->buildErrorMessage($response) ?? 'Invoice API returned no data.';
             $this->logger->error('generate returned no data: ' . $msg, $logCtx);
             $this->persistError($orderId, $context, $order, $msg);
+            $this->audit($orderId, $action, 'error', [
+                'format'       => $format,
+                'errorMessage' => $msg,
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => false, 'message' => $msg];
         }
@@ -183,6 +254,11 @@ final class InvoiceGenerator
             $msg = 'API returned non-base64 data.';
             $this->logger->error($msg, $logCtx);
             $this->persistError($orderId, $context, $order, $msg);
+            $this->audit($orderId, $action, 'error', [
+                'format'       => $format,
+                'errorMessage' => $msg,
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => false, 'message' => $msg];
         }
@@ -199,6 +275,11 @@ final class InvoiceGenerator
                 array_merge($logCtx, ['exception' => $e]),
             );
             $this->persistError($orderId, $context, $order, $e->getMessage());
+            $this->audit($orderId, $action, 'error', [
+                'format'       => $format,
+                'errorMessage' => $e->getMessage(),
+                'durationMs'   => $this->elapsedMs($started),
+            ]);
 
             return ['success' => false, 'skipped' => false, 'message' => $e->getMessage()];
         }
@@ -211,11 +292,17 @@ final class InvoiceGenerator
                 $orderId,
                 $remoteFilename,
                 strlen($bytes),
-                $type,
+                $type->value,
                 $templateId ?? 'default',
             ),
             $logCtx,
         );
+
+        $this->audit($orderId, $action, 'success', [
+            'format'     => $format,
+            'filePath'   => $relativePath,
+            'durationMs' => $this->elapsedMs($started),
+        ]);
 
         return [
             'success'  => true,
@@ -249,13 +336,52 @@ final class InvoiceGenerator
      * Read all `InvoiceApiXhub.config.*` keys into a flat assoc array.
      * Keys are returned without the prefix (e.g. `apiKey`, `country`).
      *
+     * When a sales-channel id is passed, Shopware's SystemConfigService
+     * looks up channel-specific overrides first and merges them on top of
+     * the global defaults — that's how multi-storefront merchants run
+     * different country/format combinations from a single plugin install.
+     * Passing null returns the pure global config, used for non-order
+     * code-paths (e.g. the future global-logs view).
+     *
      * @return array<string,mixed>
      */
-    private function loadConfig(): array
+    private function loadConfig(?string $salesChannelId = null): array
     {
-        $raw = $this->config->get(self::CONFIG_DOMAIN);
+        $raw = $this->config->get(self::CONFIG_DOMAIN, $salesChannelId);
 
         return is_array($raw) ? $raw : [];
+    }
+
+    /**
+     * Best-effort wrapper around AuditLogger::log() — silently no-ops when
+     * the optional dependency is not wired (e.g. older unit tests). The
+     * AuditLogger itself swallows DB errors, so this method never throws.
+     *
+     * @param array<string,mixed> $context
+     */
+    private function audit(string $orderId, string $action, string $status, array $context = []): void
+    {
+        if (null === $this->auditLogger) {
+            return;
+        }
+        /** @var array{
+         *     format?: ?string,
+         *     filePath?: ?string,
+         *     httpCode?: ?int,
+         *     durationMs?: ?int,
+         *     errorMessage?: ?string,
+         *     userId?: ?string,
+         * } $context */
+        $this->auditLogger->log($orderId, $action, $status, $context);
+    }
+
+    /**
+     * Round microtime() delta to integer milliseconds — what AuditLogger
+     * stores in the `duration_ms` column.
+     */
+    private function elapsedMs(float $started): int
+    {
+        return (int) round((microtime(true) - $started) * 1000.0);
     }
 
     /**

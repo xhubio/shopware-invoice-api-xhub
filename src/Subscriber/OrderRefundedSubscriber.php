@@ -13,6 +13,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\StateMachine\Event\StateMachineTransitionEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Xhubio\InvoiceApiXhub\Enum\InvoiceType;
 use Xhubio\InvoiceApiXhub\MessageQueue\GenerateInvoiceMessage;
 
 /**
@@ -88,7 +89,7 @@ final class OrderRefundedSubscriber implements EventSubscriberInterface
         }
 
         try {
-            $this->bus->dispatch(new GenerateInvoiceMessage($orderId, 'credit_note'));
+            $this->bus->dispatch(new GenerateInvoiceMessage($orderId, InvoiceType::CreditNote));
             $this->logger->info(
                 sprintf('Dispatched credit-note generation for order %s (transaction=%s, state=%s)', $orderId, $transactionId, $toState),
                 ['source' => self::LOG_SOURCE],

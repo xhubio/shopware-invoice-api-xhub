@@ -3,7 +3,7 @@
     "description": "Generate compliant e-invoices (XRechnung, ZUGFeRD, PDF) from Shopware orders via the invoice-api.xhub.io API. Live now: PDF, XRechnung, ZUGFeRD. Coming Q3 2026: Factur-X, FatturaPA, Facturae, ebInterface, UBL, ISDOC, NAV.",
     "type": "shopware-platform-plugin",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "authors": [
         {
             "name": "invoice-api.xhub.io - A Digital Service by BeeBack UG ",
@@ -41,7 +41,8 @@
         },
         "copyright": "(c) by BeeBack UG (invoice-api.xhub.io) - A Digital Service",
         "changelog": {
-            "1.0.0": "CHANGELOG_en-GB.md"
+            "1.0.0": "CHANGELOG_en-GB.md",
+            "1.1.0": "CHANGELOG_en-GB.md"
         }
     },
     "autoload": {

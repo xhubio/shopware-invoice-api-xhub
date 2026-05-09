@@ -21,6 +21,7 @@ use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Currency\CurrencyEntity;
+use Xhubio\InvoiceApiXhub\Enum\InvoiceType;
 use Xhubio\InvoiceApiXhub\Service\InvoiceNumberService;
 use Xhubio\InvoiceApiXhub\Service\OrderMapper;
 use Xhubio\InvoiceApiXhub\Service\TemplateResolver;
@@ -56,7 +57,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->minimalOrder();
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('INV-SW-1001', $invoice['invoiceNumber']);
         self::assertSame('invoice', $invoice['type']);
@@ -71,7 +72,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $config = $this->fullSellerConfig() + ['paymentDueDays' => 30];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertSame(30, $invoice['paymentTerms']['dueDays']);
         self::assertSame('2026-05-30', $invoice['dueDate']);
@@ -82,7 +83,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $config = $this->fullSellerConfig() + ['paymentDueDays' => -5];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertSame(0, $invoice['paymentTerms']['dueDays']);
     }
@@ -109,7 +110,7 @@ final class OrderMapperTest extends TestCase
         ));
         $bare->setDeliveries(new OrderDeliveryCollection());
 
-        $invoice = $this->mapper->mapToInvoice($bare, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($bare, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('EUR', $invoice['currency']);
     }
@@ -118,7 +119,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->minimalOrder();
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame([
             'name'        => 'Invoice-api.xhub Seller GmbH',
@@ -144,7 +145,7 @@ final class OrderMapperTest extends TestCase
             // no email/phone/vatId
         ];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertArrayNotHasKey('vatId', $invoice['seller']);
         self::assertArrayNotHasKey('email', $invoice['seller']);
@@ -156,7 +157,7 @@ final class OrderMapperTest extends TestCase
         $order  = $this->minimalOrder();
         $config = ['sellerCountryCode' => 'at', 'sellerName' => 'A', 'sellerStreet' => 'S', 'sellerCity' => 'V', 'sellerPostalCode' => '1010'];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertSame('AT', $invoice['seller']['countryCode']);
     }
@@ -165,7 +166,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->minimalOrder();
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('Buyer Company AG', $invoice['buyer']['name']);
         self::assertSame('Hauptstr. 7 Apt. 4', $invoice['buyer']['street']);
@@ -188,7 +189,7 @@ final class OrderMapperTest extends TestCase
         self::assertNotNull($billing);
         $billing->assign(['company' => null]);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('Jane Doe', $invoice['buyer']['name']);
     }
@@ -203,7 +204,7 @@ final class OrderMapperTest extends TestCase
         self::assertNotNull($billing);
         $billing->assign(['company' => null, 'firstName' => '', 'lastName' => '']);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('Customer', $invoice['buyer']['name']);
     }
@@ -217,7 +218,7 @@ final class OrderMapperTest extends TestCase
         self::assertNotNull($country);
         $country->setIso('de');
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('DE', $invoice['buyer']['countryCode']);
     }
@@ -226,7 +227,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->minimalOrder();
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertCount(1, $invoice['items']);
         $item = $invoice['items'][0];
@@ -256,7 +257,7 @@ final class OrderMapperTest extends TestCase
         $child->setParentId('any-parent');
         $items->add($child);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         // still 1 item — child filtered out
         self::assertCount(1, $invoice['items']);
@@ -266,7 +267,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->orderWithSingleLineItem(taxRate: 0.0, taxAmount: 0.0, totalGross: 50.0);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('Z', $invoice['items'][0]['taxCategoryCode']);
         self::assertSame(0.0, $invoice['items'][0]['taxRate']);
@@ -276,7 +277,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->orderWithSingleLineItem(taxRate: 19.0, taxAmount: 0.0, totalGross: 0.0, quantity: 0);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame(0.0, $invoice['items'][0]['unitPrice']);
     }
@@ -286,7 +287,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $this->attachDelivery($order, shippingTotalGross: 5.95, shippingTaxAmount: 0.95, shippingTaxRate: 19.0);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertCount(2, $invoice['items']);
         $shipping = $invoice['items'][1];
@@ -303,7 +304,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $this->attachDelivery($order, shippingTotalGross: 0.0, shippingTaxAmount: 0.0, shippingTaxRate: 0.0);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertCount(1, $invoice['items']);
     }
@@ -312,7 +313,7 @@ final class OrderMapperTest extends TestCase
     {
         $order = $this->minimalOrder();
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertCount(1, $invoice['taxSummary']);
         self::assertSame(19.0, $invoice['taxSummary'][0]['taxRate']);
@@ -331,7 +332,7 @@ final class OrderMapperTest extends TestCase
             'sellerAccountHolder' => 'Invoice-api.xhub Seller GmbH',
         ];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertSame([
             'iban'          => 'DE89370400440532013000',
@@ -347,7 +348,7 @@ final class OrderMapperTest extends TestCase
         $order  = $this->minimalOrder();
         $config = $this->fullSellerConfig();
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertArrayNotHasKey('bankAccount', $invoice['seller']);
         self::assertArrayNotHasKey('paymentMethods', $invoice);
@@ -359,7 +360,7 @@ final class OrderMapperTest extends TestCase
         $order->setCustomFields(['invoice_api_xhub_leitweg_id' => '991-12345-67']);
         $config = $this->fullSellerConfig() + ['defaultLeitwegId' => '0000-FALLBACK-0000'];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertSame('991-12345-67', $invoice['countrySpecific']['leitwegId']);
     }
@@ -369,7 +370,7 @@ final class OrderMapperTest extends TestCase
         $order  = $this->minimalOrder();
         $config = $this->fullSellerConfig() + ['defaultLeitwegId' => 'CFG-0001'];
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertSame('CFG-0001', $invoice['countrySpecific']['leitwegId']);
     }
@@ -379,7 +380,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $order->setCustomFields(['invoice_api_xhub_buyer_reference' => 'BR-2026-A']);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('BR-2026-A', $invoice['countrySpecific']['buyerReference']);
     }
@@ -391,7 +392,7 @@ final class OrderMapperTest extends TestCase
         $config['sellerCountryCode'] = 'AT';
         $order->setCustomFields(['invoice_api_xhub_leitweg_id' => 'LW-X']);
 
-        $invoice = $this->mapper->mapToInvoice($order, $config, 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $config, InvoiceType::Invoice);
 
         self::assertArrayNotHasKey('countrySpecific', $invoice);
     }
@@ -401,7 +402,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $order->setCustomerComment('  Bitte schnell liefern.  ');
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertSame('Bitte schnell liefern.', $invoice['note']);
     }
@@ -411,7 +412,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $order->setCustomerComment("   \t   ");
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'invoice');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::Invoice);
 
         self::assertArrayNotHasKey('note', $invoice);
     }
@@ -421,7 +422,7 @@ final class OrderMapperTest extends TestCase
         $order = $this->minimalOrder();
         $order->setCustomFields(['invoice_api_xhub_invoice_number' => 'INV-99']);
 
-        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), 'credit_note');
+        $invoice = $this->mapper->mapToInvoice($order, $this->fullSellerConfig(), InvoiceType::CreditNote);
 
         self::assertSame('credit_note', $invoice['type']);
         self::assertSame('INV-99', $invoice['referencedInvoiceNumber']);

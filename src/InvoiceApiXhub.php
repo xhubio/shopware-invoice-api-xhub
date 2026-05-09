@@ -34,6 +34,8 @@ class InvoiceApiXhub extends Plugin
 {
     private const SEQUENCE_TABLE = 'invoice_api_xhub_seq';
 
+    private const AUDIT_TABLE = 'invoice_api_xhub_audit';
+
     private const CUSTOM_FIELD_SET_NAME = 'invoice_api_xhub';
 
     public function install(InstallContext $context): void
@@ -83,6 +85,14 @@ class InvoiceApiXhub extends Plugin
         // doctrine/dbal schema dependencies during uninstall.
         $connection->executeStatement(
             'DROP TABLE IF EXISTS `' . self::SEQUENCE_TABLE . '`'
+        );
+
+        // Wave 7D audit-trail table. Drop ordering does not matter — the
+        // FK is `ON DELETE CASCADE` from the order table, never the other
+        // way around, so dropping this table standalone is safe even if
+        // orders still exist.
+        $connection->executeStatement(
+            'DROP TABLE IF EXISTS `' . self::AUDIT_TABLE . '`'
         );
 
         // Remove the custom-field-set we registered for orders. We resolve

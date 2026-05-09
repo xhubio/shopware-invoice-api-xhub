@@ -69,6 +69,10 @@
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <argument type="service" id="order.repository"/>
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <!-- Wave 7C: optional ViesValidator for buyer VAT-ID pre-check. -->
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\ViesValidator" on-invalid="null"/>
+            <!-- Wave 7D: optional AuditLogger for the per-order audit trail. -->
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\AuditLogger" on-invalid="null"/>
         </service>
 
         <!--
@@ -80,6 +84,8 @@
             <argument type="service" id="order.repository"/>
             <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
             <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <!-- Wave 7D: optional AuditLogger so erase also wipes audit rows. -->
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\AuditLogger" on-invalid="null"/>
         </service>
 
         <!--
@@ -141,6 +147,63 @@
             <argument type="service" id="messenger.bus.default"/>
             <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
             <argument type="service" id="order.repository"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <!-- Wave 7D: optional AuditLogger; admin Logs tab reads from it. -->
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\AuditLogger" on-invalid="null"/>
+        </service>
+
+        <!-- Wave 7C: Auto-Email-Attachment + VIES + Customer-Portal -->
+
+        <!--
+            MailAttachmentSubscriber — listens to MailBeforeValidateEvent and
+            attaches the generated invoice file to outgoing order-related
+            mails (order_confirmation, state_change, ...). Skips silently for
+            non-order mails and when the order has no invoice yet. Closes the
+            #1 competitor-parity gap with Pickware / sevDesk / Lexware Office.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Subscriber\MailAttachmentSubscriber">
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!--
+            ViesValidator — pre-validates buyer VAT-IDs against the EU VIES
+            REST API before invoice generation. Cached for one hour, fail-open
+            on transport errors so a flaky VIES never blocks a sale. Toggle
+            via `validateVatBeforeGenerate` config flag (default off).
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\ViesValidator">
+            <argument type="service" id="Symfony\Contracts\HttpClient\HttpClientInterface"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+
+        <!--
+            InvoiceDownloadController — storefront route for logged-in
+            customers to download their own invoice via /account/invoice/{orderId}.
+            Public so Symfony's controller resolver can fetch it from the
+            container.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Storefront\Controller\InvoiceDownloadController" public="true">
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+
+        <!-- Wave 7D: Audit-Trail-Service -->
+
+        <!--
+            AuditLogger — append-only audit log for every plugin action
+            (generate, regenerate, credit_note, download, erase). Backed by
+            the `invoice_api_xhub_audit` table created in Migration1715000001.
+            Wired into InvoiceGenerator (writes), InvoiceController (reads
+            for the per-order Logs tab) and PrivacyService (bulk-erase on
+            customer delete).
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\AuditLogger">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="Psr\Log\LoggerInterface"/>
         </service>
     </services>

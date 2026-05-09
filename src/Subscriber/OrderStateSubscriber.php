@@ -9,6 +9,8 @@ use Shopware\Core\System\StateMachine\Event\StateMachineTransitionEvent;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Xhubio\InvoiceApiXhub\Enum\InvoiceType;
+use Xhubio\InvoiceApiXhub\Enum\Trigger;
 use Xhubio\InvoiceApiXhub\MessageQueue\GenerateInvoiceMessage;
 
 /**
@@ -20,18 +22,19 @@ use Xhubio\InvoiceApiXhub\MessageQueue\GenerateInvoiceMessage;
  * because Shopware does not let you subscribe to a specific entity-name
  * via the event class alone.
  *
- * Trigger mapping (config -> Shopware order state technicalName):
- *   on_pending    → 'open'           (order created, not paid/processed yet)
- *   on_processing → 'in_progress'    (paid / being fulfilled)
- *   on_completed  → 'completed'      (fulfilled, default)
- *   on_on_hold    → no exact match — Shopware orders don't have an
+ * Trigger mapping (Trigger enum -> Shopware order state technicalName):
+ *   OnPending     → 'open'           (order created, not paid/processed yet)
+ *   OnProcessing  → 'in_progress'    (paid / being fulfilled)
+ *   OnCompleted   → 'completed'      (fulfilled, default)
+ *   OnHold        → no exact match — Shopware orders don't have an
  *                   "on hold" state. WC uses on-hold for BACS / advance
  *                   transfer; the closest Shopware equivalent lives on
  *                   `order_transaction` (state 'open'/'reminded'), not on
- *                   the order itself. We log a warning the first time
+ *                   the order itself. We log a debug entry the first time
  *                   this is selected so the merchant can re-pick a state
  *                   that actually fires; better to be noisy-and-correct
  *                   than silent-and-broken.
+ *   Off           → no-op (auto-generation disabled).
  *
  * Dispatch goes through MessageBusInterface (Symfony Messenger). Shopware
  * registers `messenger.bus.shopware` as the default bus; the alias resolves
@@ -45,7 +48,13 @@ final class OrderStateSubscriber implements EventSubscriberInterface
 
     private const CONFIG_DOMAIN = 'InvoiceApiXhub.config';
 
-    /** Shopware technicalName per config trigger choice. */
+    /**
+     * Trigger -> Shopware technicalName map. Triggers without a real
+     * Shopware equivalent (currently only OnHold) are intentionally
+     * absent so the dispatcher takes the "skip + log debug" path.
+     *
+     * @var array<value-of<Trigger>,string>
+     */
     private const TRIGGER_TO_STATE = [
         'on_pending'    => 'open',
         'on_processing' => 'in_progress',
@@ -79,13 +88,26 @@ final class OrderStateSubscriber implements EventSubscriberInterface
 
         $configValues = $this->config->get(self::CONFIG_DOMAIN);
         $configValues = is_array($configValues) ? $configValues : [];
-        $trigger      = isset($configValues['trigger']) ? (string) $configValues['trigger'] : 'on_completed';
+        $triggerRaw   = isset($configValues['trigger']) ? (string) $configValues['trigger'] : Trigger::OnCompleted->value;
 
-        if ('off' === $trigger) {
+        // tryFrom() returns null for unknown values — we treat that as a
+        // no-op (instead of crashing) so a stale config row from a future
+        // plugin version cannot break the order pipeline.
+        $trigger = Trigger::tryFrom($triggerRaw);
+        if (null === $trigger) {
+            $this->logger->debug(
+                sprintf('Unknown trigger config "%s"; skipping.', $triggerRaw),
+                ['source' => self::LOG_SOURCE],
+            );
+
             return;
         }
 
-        if ('on_on_hold' === $trigger) {
+        if (Trigger::Off === $trigger) {
+            return;
+        }
+
+        if (Trigger::OnHold === $trigger) {
             // Shopware orders have no equivalent state. Log once at debug
             // so production logs stay quiet but a developer enabling the
             // option in dev gets a hint why nothing happens.
@@ -97,10 +119,10 @@ final class OrderStateSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $expectedState = self::TRIGGER_TO_STATE[$trigger] ?? null;
+        $expectedState = self::TRIGGER_TO_STATE[$trigger->value] ?? null;
         if (null === $expectedState) {
             $this->logger->debug(
-                sprintf('Unknown trigger config "%s"; skipping.', $trigger),
+                sprintf('Trigger "%s" has no state mapping; skipping.', $trigger->value),
                 ['source' => self::LOG_SOURCE],
             );
 
@@ -115,9 +137,9 @@ final class OrderStateSubscriber implements EventSubscriberInterface
         $orderId = $event->getEntityId();
 
         try {
-            $this->bus->dispatch(new GenerateInvoiceMessage($orderId, 'invoice'));
+            $this->bus->dispatch(new GenerateInvoiceMessage($orderId, InvoiceType::Invoice));
             $this->logger->info(
-                sprintf('Dispatched async invoice generation for order %s (trigger=%s)', $orderId, $trigger),
+                sprintf('Dispatched async invoice generation for order %s (trigger=%s)', $orderId, $trigger->value),
                 ['source' => self::LOG_SOURCE],
             );
         } catch (\Throwable $e) {

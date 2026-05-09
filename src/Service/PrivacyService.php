@@ -56,6 +56,7 @@ final class PrivacyService
         private readonly EntityRepository $orderRepository,
         private readonly InvoiceFileStorage $fileStorage,
         private readonly LoggerInterface $logger,
+        private readonly ?AuditLogger $auditLogger = null,
     ) {
     }
 
@@ -79,13 +80,15 @@ final class PrivacyService
 
         $erasedOrders = 0;
         $erasedFiles  = 0;
+        $orderIds     = [];
 
         foreach ($orders as $order) {
             if (!$order instanceof OrderEntity) {
                 continue;
             }
-            $orderId = $order->getId();
-            $cf      = $order->getCustomFields() ?? [];
+            $orderId    = $order->getId();
+            $orderIds[] = $orderId;
+            $cf         = $order->getCustomFields() ?? [];
 
             $hasPayload = !empty($cf['invoice_api_xhub_filename'])
                 || !empty($cf['invoice_api_xhub_filepath'])
@@ -138,12 +141,23 @@ final class PrivacyService
             }
         }
 
+        // Wave 7D: also wipe the audit-trail rows for the affected orders.
+        // The `invoice_api_xhub_audit` rows would otherwise outlive the
+        // erased customFields and constitute a back-channel for the same
+        // GDPR-controlled data (filenames carry order numbers, error
+        // messages can leak buyer details). The audit wipe is a single
+        // bulk DELETE, idempotent on already-erased orders.
+        $erasedAuditRows = null !== $this->auditLogger && [] !== $orderIds
+            ? $this->auditLogger->eraseForOrderIds($orderIds)
+            : 0;
+
         $this->logger->info(
             sprintf(
-                'PrivacyService: erased invoice data for %d customers (orders=%d, files=%d)',
+                'PrivacyService: erased invoice data for %d customers (orders=%d, files=%d, audit=%d)',
                 \count($customerIds),
                 $erasedOrders,
                 $erasedFiles,
+                $erasedAuditRows,
             ),
             ['source' => self::LOG_SOURCE],
         );

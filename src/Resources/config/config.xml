@@ -173,6 +173,15 @@
             <helpText lang="en-GB">Number of days from the invoice date until the payment due date. Default 14.</helpText>
             <helpText lang="de-DE">Anzahl der Tage zwischen Rechnungsdatum und Fälligkeit. Standard 14.</helpText>
         </input-field>
+
+        <input-field type="bool">
+            <name>validateVatBeforeGenerate</name>
+            <label lang="en-GB">Validate buyer VAT-ID against EU VIES before generating</label>
+            <label lang="de-DE">USt-IdNr. des Käufers vor der Erzeugung gegen EU-VIES prüfen</label>
+            <defaultValue>false</defaultValue>
+            <helpText lang="en-GB">When enabled, the plugin checks the buyer's VAT-ID against the EU VIES service (https://ec.europa.eu/taxation_customs/vies) before sending the invoice payload. Invalid VAT-IDs abort generation with a clear last-error so you can correct the customer record before billing. Recommended for cross-border B2B sales (reverse-charge §13b UStG / Art. 196 EU VAT Directive). VIES is fail-open: when the EU service is slow or down (10–15% of office hours), generation proceeds normally and we never block a sale silently.</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, prüft das Plugin die USt-IdNr. des Käufers vor dem Senden des Rechnungs-Payloads gegen den EU-VIES-Dienst (https://ec.europa.eu/taxation_customs/vies). Ungültige USt-IdNrn. führen zum Abbruch der Erzeugung mit einer eindeutigen Fehlermeldung, sodass Sie den Kundendatensatz vor der Abrechnung korrigieren können. Empfohlen für grenzüberschreitenden B2B-Verkauf (Reverse-Charge §13b UStG / Art. 196 MwStSystRL). VIES ist fail-open: Wenn der EU-Dienst langsam oder ausgefallen ist (10–15% der Bürozeit), wird die Erzeugung normal fortgesetzt — wir blockieren nie still einen Verkauf.</helpText>
+        </input-field>
     </card>
 
     <card>

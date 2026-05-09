@@ -8,6 +8,7 @@ use Shopware\Core\Checkout\Cart\Tax\Struct\CalculatedTax;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
+use Xhubio\InvoiceApiXhub\Enum\InvoiceType;
 
 /**
  * Maps a Shopware OrderEntity into the invoice JSON shape required by
@@ -57,9 +58,10 @@ final class OrderMapper
      *
      * @param OrderEntity         $order
      * @param array<string,mixed> $config Plugin configuration values
-     * @param string              $type   'invoice' or 'credit_note'. Credit
-     *                                    notes flip every monetary amount
-     *                                    to negative and tag the document.
+     * @param InvoiceType         $type   Invoice (forward) or CreditNote.
+     *                                    Credit notes flip every monetary
+     *                                    amount to negative and tag the
+     *                                    document type accordingly.
      *
      * @return array<string,mixed> Invoice JSON ready to wrap into
      *                             `{invoice, formatOptions, templateId}`.
@@ -67,7 +69,7 @@ final class OrderMapper
     public function mapToInvoice(
         OrderEntity $order,
         array $config,
-        string $type = 'invoice',
+        InvoiceType $type = InvoiceType::Invoice,
     ): array {
         $country  = strtoupper(isset($config['sellerCountryCode']) ? (string) $config['sellerCountryCode'] : 'DE');
         $currency = $order->getCurrency()?->getIsoCode() ?? 'EUR';
@@ -133,7 +135,7 @@ final class OrderMapper
             $invoice['note'] = $note;
         }
 
-        if ('credit_note' === $type) {
+        if (InvoiceType::CreditNote === $type) {
             $invoice = $this->convertToCreditNote($invoice, $customFields);
         }
 

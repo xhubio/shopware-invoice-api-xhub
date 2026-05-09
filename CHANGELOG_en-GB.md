@@ -1,3 +1,13 @@
+# 1.1.0
+
+* **Auto-email-attachment** — generated invoice is automatically attached to the customer's order-confirmation email via `MailBeforeValidateEvent` (config-toggle `attachToEmail`, default on).
+* **Storefront customer-portal** — customers can download their invoice from their account area (`/account/invoice/{orderId}`) with ownership-check (`customerId === order.orderCustomer.customerId`). 403 for foreign orders, 404 if no invoice generated yet.
+* **VIES VAT-ID validation** — optional pre-validation of buyer VAT-IDs against the EU VIES API before generation. Invalid VAT → generation skipped + audit-logged. Toggle `validateVatBeforeGenerate` in plugin config, default off.
+* **Audit-trail entity** — new `invoice_api_xhub_audit` table replaces synthetic-from-customField history. Per-step events with status/format/duration/error/user-id, queryable from the admin "History" card.
+* **PHP 8.1 backed enums** — `InvoiceFormat`, `Trigger`, `InvoiceType` for type-safe internal representation. `config.xml` keeps string values for Shopware-config-system compatibility.
+* **Sales-channel-specific config overrides** — `SystemConfigService::get()` now receives the order's `salesChannelId`. Multi-storefront shops can configure a different country/format/seller per sales-channel; Shopware merges channel-overrides over global defaults.
+* **Migration `1715000001CreateAuditTable.php`** — adds the audit table with FK-cascade-on-order-delete; uninstall drops the table when `keepUserData=false`.
+
 # 1.0.0
 
 * Initial release.
