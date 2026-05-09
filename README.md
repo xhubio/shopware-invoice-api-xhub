@@ -1,5 +1,8 @@
 # Invoice-api.xhub for Shopware
 
+[![CI](https://github.com/xhubio/shopware-invoice-api-xhub/actions/workflows/ci.yml/badge.svg)](https://github.com/xhubio/shopware-invoice-api-xhub/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+
 Free, MIT-licensed connector between Shopware 6.6/6.7 and the [invoice-api.xhub.io](https://invoice-api.xhub.io) e-invoicing API. Generates EU-compliant electronic invoices (PDF, XRechnung, ZUGFeRD) directly from Shopware orders.
 
 > Deutsche Dokumentation: [README.de.md](./README.de.md)
@@ -109,7 +112,7 @@ The plugin is **free** under MIT license, distributed via GitHub, packagist.org,
 
 - Shopware 6.6
 - Shopware 6.7
-- PHP 8.1+
+- PHP 8.2+
 
 ## Development
 
