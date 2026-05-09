@@ -88,7 +88,7 @@ Dieser Abschnitt führt den Shopware-Marketplace-Reviewer durch einen vollständ
 
 ### Hinweis für Reviewer
 
-Für den Review-Prozess stellen wir einen Sandbox-API-Schlüssel mit dem Tag "review" bereit — bitte senden Sie eine E-Mail an `support@invoice-api.xhub.io` mit Ihrer Reviewer-ID, und wir senden Ihnen einen Schlüssel, der für die Dauer des Reviews gültig ist.
+Für den Review-Prozess stellen wir einen Sandbox-API-Schlüssel mit dem Tag "review" bereit — bitte senden Sie eine E-Mail an `support.invoice-api@xhub.io` mit Ihrer Reviewer-ID, und wir senden Ihnen einen Schlüssel, der für die Dauer des Reviews gültig ist.
 
 Das Plugin sendet ausgehende HTTPS-Requests an `https://service.invoice-api.xhub.io` zur Rechnungserstellung. Übermittelte Daten: Bestellpositionen, Rechnungs-/Lieferadresse, konfigurierte Verkäufer-Stammdaten. Es werden keine Daten gesendet, bevor der API-Schlüssel explizit konfiguriert wurde. Datenschutzerklärung: https://invoice-api.xhub.io/privacy
 
@@ -118,7 +118,7 @@ Siehe `docs/SETUP-WALKTHROUGH-DOCKER.md` für einen Docker-basierten Dev-/Test-S
 ## Support
 
 - Fehlerberichte / Feature-Wünsche: https://github.com/xhubio/shopware-invoice-api-xhub/issues
-- E-Mail: support@invoice-api.xhub.io
+- E-Mail: support.invoice-api@xhub.io
 - Dokumentation: https://invoice-api.xhub.io/de/docs/integrations/shopware
 
 ## Lizenz

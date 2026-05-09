@@ -88,7 +88,7 @@ This section guides the Shopware Marketplace reviewer through a complete test of
 
 ### Reviewer note
 
-For the review process we provide a sandbox API key with the "review" tag — please email `support@invoice-api.xhub.io` with your reviewer ID, and we will send you a key valid for the duration of the review.
+For the review process we provide a sandbox API key with the "review" tag — please email `support.invoice-api@xhub.io` with your reviewer ID, and we will send you a key valid for the duration of the review.
 
 The plugin makes outbound HTTP requests to `https://service.invoice-api.xhub.io` for invoice generation. Data sent: order line items, billing/shipping addresses, configured seller info. No data is sent before the user has explicitly configured the API key. Privacy policy: https://invoice-api.xhub.io/privacy
 
@@ -118,7 +118,7 @@ See `docs/SETUP-WALKTHROUGH-DOCKER.md` for a one-command Docker-based dev/test s
 ## Support
 
 - Bug reports / feature requests: https://github.com/xhubio/shopware-invoice-api-xhub/issues
-- Email: support@invoice-api.xhub.io
+- Email: support.invoice-api@xhub.io
 - Docs: https://invoice-api.xhub.io/en/docs/integrations/shopware
 
 ## License
