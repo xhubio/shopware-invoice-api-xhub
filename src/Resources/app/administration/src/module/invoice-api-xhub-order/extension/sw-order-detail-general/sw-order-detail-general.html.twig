@@ -1,0 +1,12 @@
+{% block sw_order_detail_general %}
+    {% parent %}
+
+    <mt-card
+        class="invoice-api-xhub-card"
+        position-identifier="invoice-api-xhub-order-card"
+        title="Invoice-api.xhub"
+    >
+        <invoice-api-xhub-order-actions :order-id="order.id" />
+        <invoice-api-xhub-logs-tab :order-id="order.id" />
+    </mt-card>
+{% endblock %}

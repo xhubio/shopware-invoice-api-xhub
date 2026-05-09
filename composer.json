@@ -1,0 +1,52 @@
+{
+    "name": "xhubio/shopware-invoice-api-xhub",
+    "description": "Generate compliant e-invoices (XRechnung, ZUGFeRD, PDF) from Shopware orders via the invoice-api.xhub.io API. Live now: PDF, XRechnung, ZUGFeRD. Coming Q3 2026: Factur-X, FatturaPA, Facturae, ebInterface, UBL, ISDOC, NAV.",
+    "type": "shopware-platform-plugin",
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "invoice-api.xhub.io - A Digital Service by BeeBack UG ",
+            "homepage": "https://invoice-api.xhub.io"
+        }
+    ],
+    "require": {
+        "shopware/core": "^6.6 || ^6.7"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Xhubio\\InvoiceApiXhub\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "shopware-plugin-class": "Xhubio\\InvoiceApiXhub\\InvoiceApiXhub",
+        "label": {
+            "de-DE": "Invoice-api.xhub für Shopware",
+            "en-GB": "Invoice-api.xhub for Shopware"
+        },
+        "description": {
+            "de-DE": "E-Rechnungen aus Shopware-Bestellungen über invoice-api.xhub.io. Live: PDF, XRechnung, ZUGFeRD. Q3 2026: Factur-X, FatturaPA, Facturae, ebInterface, UBL, ISDOC, NAV.",
+            "en-GB": "E-invoices from Shopware orders via invoice-api.xhub.io. Live: PDF, XRechnung, ZUGFeRD. Q3 2026: Factur-X, FatturaPA, Facturae, ebInterface, UBL, ISDOC, NAV."
+        },
+        "manufacturerLink": {
+            "de-DE": "https://invoice-api.xhub.io",
+            "en-GB": "https://invoice-api.xhub.io"
+        },
+        "supportLink": {
+            "de-DE": "https://invoice-api.xhub.io/de/support",
+            "en-GB": "https://invoice-api.xhub.io/en/support"
+        },
+        "copyright": "(c) by BeeBack UG (invoice-api.xhub.io) - A Digital Service",
+        "changelog": {
+            "1.0.0": "CHANGELOG_en-GB.md"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Xhubio\\InvoiceApiXhub\\": "src/"
+        }
+    }
+}

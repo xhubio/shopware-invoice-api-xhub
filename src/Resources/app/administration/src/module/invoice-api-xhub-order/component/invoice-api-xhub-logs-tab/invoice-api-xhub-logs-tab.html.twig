@@ -1,0 +1,50 @@
+{% block invoice_api_xhub_logs_tab %}
+<sw-card :title="$tc('invoice-api-xhub.logs.title')" class="invoice-api-xhub-logs-tab">
+    <template #toolbar>
+        <sw-button
+            @click="loadLogs"
+            :is-loading="isLoading"
+            size="small"
+            variant="ghost"
+        >
+            {{ $tc('invoice-api-xhub.logs.refresh') }}
+        </sw-button>
+    </template>
+
+    <sw-loader v-if="isLoading" />
+
+    <sw-empty-state
+        v-else-if="!hasEntries && !error"
+        :title="$tc('invoice-api-xhub.logs.empty')"
+        :subline="$tc('invoice-api-xhub.logs.emptySubline')"
+        icon="regular-file-text"
+    />
+
+    <div v-else-if="error" class="invoice-api-xhub-logs__error">
+        <sw-alert variant="error">{{ error }}</sw-alert>
+    </div>
+
+    <sw-data-grid
+        v-else
+        :data-source="entries"
+        :columns="columns"
+        :show-selection="false"
+        :show-actions="false"
+        :show-settings="false"
+        :compact-mode="true"
+        :plain-appearance="true"
+    >
+        <template #column-timestamp="{ item }">
+            <span class="invoice-api-xhub-logs__timestamp">{{ formatTimestamp(item.timestamp) }}</span>
+        </template>
+        <template #column-status="{ item }">
+            <sw-color-badge :variant="statusVariant(item.status)" rounded>
+                {{ item.status }}
+            </sw-color-badge>
+        </template>
+        <template #column-message="{ item }">
+            <span class="invoice-api-xhub-logs__message" :title="item.message">{{ item.message }}</span>
+        </template>
+    </sw-data-grid>
+</sw-card>
+{% endblock %}

@@ -1,0 +1,38 @@
+{
+    "invoice-api-xhub": {
+        "module": {
+            "title": "Invoice-api.xhub",
+            "description": "E-invoice generation"
+        },
+        "tab": {
+            "label": "Invoice-api.xhub"
+        },
+        "actions": {
+            "title": "Invoice actions",
+            "regenerate": "Re-generate invoice",
+            "download": "Download",
+            "regenerateInProgress": "Generating...",
+            "regenerateSuccess": "Invoice generated successfully.",
+            "regenerateError": "Generation failed: {{message}}",
+            "downloadFailed": "Download failed.",
+            "noInvoiceYet": "No invoice generated yet.",
+            "lastError": "Last error",
+            "filename": "Filename",
+            "generatedAt": "Generated at"
+        },
+        "logs": {
+            "title": "History",
+            "empty": "No history entries yet.",
+            "emptySubline": "Once invoices are generated for this order, they appear here.",
+            "refresh": "Refresh",
+            "col": {
+                "timestamp": "When",
+                "action": "Action",
+                "format": "Format",
+                "status": "Status",
+                "filename": "File",
+                "message": "Detail"
+            }
+        }
+    }
+}

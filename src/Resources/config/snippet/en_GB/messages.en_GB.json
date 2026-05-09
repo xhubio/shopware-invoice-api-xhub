@@ -1,0 +1,8 @@
+{
+    "invoice-api-xhub": {
+        "config": {
+            "title": "Invoice-api.xhub for Shopware",
+            "description": "E-invoices from Shopware orders via the invoice-api.xhub.io API"
+        }
+    }
+}

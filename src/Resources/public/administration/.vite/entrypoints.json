@@ -1,0 +1,16 @@
+{
+    "base": "/bundles/invoiceapixhub/administration/",
+    "entryPoints": {
+        "invoice-api-xhub": {
+            "css": [],
+            "dynamic": [],
+            "js": ["/bundles/invoiceapixhub/administration/js/invoice-api-xhub.js"],
+            "legacy": false,
+            "preload": []
+        }
+    },
+    "legacy": false,
+    "metadatas": {},
+    "version": ["7.1.0", 7, 1, 0],
+    "viteServer": null
+}

@@ -1,0 +1,50 @@
+{% block invoice_api_xhub_order_actions %}
+<sw-card :title="$tc('invoice-api-xhub.actions.title')" class="invoice-api-xhub-order-actions">
+    <template v-if="hasInvoice">
+        <div class="invoice-api-xhub-meta">
+            <p>
+                <strong>{{ $tc('invoice-api-xhub.actions.filename') }}:</strong>
+                {{ invoiceMeta.filename }}
+            </p>
+            <p v-if="invoiceMeta.generatedAt">
+                <strong>{{ $tc('invoice-api-xhub.actions.generatedAt') }}:</strong>
+                {{ invoiceMeta.generatedAt }}
+            </p>
+        </div>
+        <div class="invoice-api-xhub-buttons">
+            <sw-button
+                variant="primary"
+                :disabled="!canRegenerate || isLoading"
+                @click="onRegenerate"
+            >
+                <span v-if="isLoading">{{ $tc('invoice-api-xhub.actions.regenerateInProgress') }}</span>
+                <span v-else>{{ $tc('invoice-api-xhub.actions.regenerate') }}</span>
+            </sw-button>
+            <sw-button
+                :disabled="isLoading"
+                @click="onDownload"
+            >
+                {{ $tc('invoice-api-xhub.actions.download') }}
+            </sw-button>
+        </div>
+    </template>
+    <template v-else>
+        <p>{{ $tc('invoice-api-xhub.actions.noInvoiceYet') }}</p>
+        <p
+            v-if="invoiceMeta && invoiceMeta.lastError"
+            class="invoice-api-xhub-last-error"
+        >
+            <strong>{{ $tc('invoice-api-xhub.actions.lastError') }}:</strong>
+            {{ invoiceMeta.lastError }}
+        </p>
+        <sw-button
+            variant="primary"
+            :disabled="!canRegenerate || isLoading"
+            @click="onRegenerate"
+        >
+            <span v-if="isLoading">{{ $tc('invoice-api-xhub.actions.regenerateInProgress') }}</span>
+            <span v-else>{{ $tc('invoice-api-xhub.actions.regenerate') }}</span>
+        </sw-button>
+    </template>
+</sw-card>
+{% endblock %}

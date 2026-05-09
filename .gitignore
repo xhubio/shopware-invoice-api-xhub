@@ -1,0 +1,18 @@
+# Plugin-local Composer artefacts.
+#
+# We DO commit composer.json (that's the plugin manifest), but we do NOT
+# commit composer.lock or vendor/. The Marketplace ZIP is built from a clean
+# checkout via `make build-zip`, which deliberately *excludes* dev deps. Any
+# vendor/ on disk here is a developer's local install for running PHPUnit
+# (`tests/`) or PHPStan against the source — it is never the source of
+# what ships to merchants.
+/vendor/
+/composer.lock
+
+# PHPUnit local result cache and coverage artefacts.
+.phpunit.result.cache
+/coverage-html/
+/coverage.xml
+
+# Macro-OS metadata noise that creeps into ZIPs if not filtered.
+.DS_Store

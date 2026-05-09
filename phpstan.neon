@@ -1,0 +1,55 @@
+# PHPStan configuration for "Invoice-api.xhub for Shopware".
+#
+# Target: level 8 (strict — no implicit mixed, no missing return types).
+#
+# How to run
+# ----------
+# The plugin needs the full Shopware Core autoloader to resolve the framework's
+# ~10k classes (EntityRepository, OrderEntity, MessageBusInterface, …). Running
+# PHPStan therefore happens *inside* the dockware/dev container where the
+# autoloader already exists at /var/www/html/vendor/autoload.php.
+#
+# From the project root (the directory that contains this plugin folder), the
+# Makefile target wraps the canonical invocation:
+#
+#   make phpstan          # from shops/shopware/
+#
+# Or directly:
+#
+#   docker compose exec -T shopware /var/www/.composer/vendor/bin/phpstan \
+#     analyse /var/www/html/custom/plugins/InvoiceApiXhub/src \
+#     --configuration=/var/www/html/custom/plugins/InvoiceApiXhub/phpstan.neon \
+#     --no-progress
+#
+# Why `treatPhpDocTypesAsCertain: false`
+# --------------------------------------
+# Shopware's DAL annotates many getters as "@return SomeEntity" even though the
+# runtime can legitimately return null (or a base Entity). PHPStan's strict
+# mode then flags every defensive `instanceof` / `=== null` we wrote as
+# "always-true / always-false" — which is the opposite of what we want for
+# code that ships to merchant shops. Turning the flag off keeps our defensive
+# checks honest without lowering the analysis level overall.
+parameters:
+    level: 8
+
+    paths:
+        - src
+
+    # Treat PHPDoc types as hints, not facts. See the block comment above.
+    treatPhpDocTypesAsCertain: false
+
+    # The dockware container places the Shopware autoloader at the path below.
+    # That single file pulls in Symfony, Doctrine, league/flysystem and the
+    # ~10k Shopware Core classes the plugin depends on.
+    bootstrapFiles:
+        - /var/www/html/vendor/autoload.php
+
+    ignoreErrors:
+        # Defensive helper kept on the orchestrator for symmetry with the
+        # WooCommerce `clear_custom_fields()` reset path. Currently only
+        # invoked from PrivacyService which has its own erase() — the
+        # method stays as the canonical "hard reset" the privacy code
+        # will switch to in Phase 1.x.
+        -
+            message: '#Method Xhubio\\InvoiceApiXhub\\Service\\InvoiceGenerator::clearCustomFields\(\) is unused\.#'
+            path: src/Service/InvoiceGenerator.php

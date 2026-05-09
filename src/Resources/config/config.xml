@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <title lang="en-GB">API connection</title>
+        <title lang="de-DE">API-Verbindung</title>
+
+        <input-field type="text">
+            <name>apiKey</name>
+            <label lang="en-GB">API key</label>
+            <label lang="de-DE">API-Schlüssel</label>
+            <helpText lang="en-GB">Generate at https://console.invoice-api.xhub.io/api-keys. The key is used as a Bearer token for every API call.</helpText>
+            <helpText lang="de-DE">Erzeugen Sie den Schlüssel unter https://console.invoice-api.xhub.io/api-keys. Der Schlüssel wird als Bearer-Token bei jeder API-Anfrage übermittelt.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>baseUrl</name>
+            <label lang="en-GB">API base URL</label>
+            <label lang="de-DE">API-Basis-URL</label>
+            <defaultValue>https://service.invoice-api.xhub.io</defaultValue>
+            <helpText lang="en-GB">Default https://service.invoice-api.xhub.io. Only change for staging or self-hosted deployments.</helpText>
+            <helpText lang="de-DE">Standard https://service.invoice-api.xhub.io. Nur für Staging- oder Self-Hosted-Umgebungen anpassen.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="en-GB">Document defaults</title>
+        <title lang="de-DE">Dokument-Voreinstellungen</title>
+
+        <input-field type="single-select">
+            <name>country</name>
+            <label lang="en-GB">Country</label>
+            <label lang="de-DE">Land</label>
+            <defaultValue>DE</defaultValue>
+            <helpText lang="en-GB">Country profile used for the generated e-invoice. Determines which validation rules and country-specific fields apply.</helpText>
+            <helpText lang="de-DE">Länderprofil, das für die erzeugte E-Rechnung verwendet wird. Bestimmt die anzuwendenden Validierungsregeln und länderspezifischen Felder.</helpText>
+            <options>
+                <option>
+                    <id>DE</id>
+                    <name lang="en-GB">Germany (DE)</name>
+                    <name lang="de-DE">Deutschland (DE)</name>
+                </option>
+                <option>
+                    <id>AT</id>
+                    <name lang="en-GB">Austria (AT)</name>
+                    <name lang="de-DE">Österreich (AT)</name>
+                </option>
+                <option>
+                    <id>FR</id>
+                    <name lang="en-GB">France (FR)</name>
+                    <name lang="de-DE">Frankreich (FR)</name>
+                </option>
+                <option>
+                    <id>IT</id>
+                    <name lang="en-GB">Italy (IT)</name>
+                    <name lang="de-DE">Italien (IT)</name>
+                </option>
+                <option>
+                    <id>ES</id>
+                    <name lang="en-GB">Spain (ES)</name>
+                    <name lang="de-DE">Spanien (ES)</name>
+                </option>
+                <option>
+                    <id>BE</id>
+                    <name lang="en-GB">Belgium (BE)</name>
+                    <name lang="de-DE">Belgien (BE)</name>
+                </option>
+                <option>
+                    <id>NL</id>
+                    <name lang="en-GB">Netherlands (NL)</name>
+                    <name lang="de-DE">Niederlande (NL)</name>
+                </option>
+                <option>
+                    <id>BG</id>
+                    <name lang="en-GB">Bulgaria (BG)</name>
+                    <name lang="de-DE">Bulgarien (BG)</name>
+                </option>
+                <option>
+                    <id>RO</id>
+                    <name lang="en-GB">Romania (RO)</name>
+                    <name lang="de-DE">Rumänien (RO)</name>
+                </option>
+                <option>
+                    <id>CZ</id>
+                    <name lang="en-GB">Czech Republic (CZ)</name>
+                    <name lang="de-DE">Tschechien (CZ)</name>
+                </option>
+                <option>
+                    <id>HU</id>
+                    <name lang="en-GB">Hungary (HU)</name>
+                    <name lang="de-DE">Ungarn (HU)</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>format</name>
+            <label lang="en-GB">Format</label>
+            <label lang="de-DE">Format</label>
+            <defaultValue>xrechnung</defaultValue>
+            <helpText lang="en-GB">Currently 3 e-invoice formats can be generated: PDF, XRechnung, ZUGFeRD. Additional formats — Factur-X, FatturaPA, Facturae, ebInterface, UBL, ISDOC, NAV — are coming from Q3 2026 onwards and will appear in this dropdown automatically once the backend supports them.</helpText>
+            <helpText lang="de-DE">Aktuell sind 3 E-Rechnungsformate erzeugbar: PDF, XRechnung, ZUGFeRD. Weitere Formate — Factur-X, FatturaPA, Facturae, ebInterface, UBL, ISDOC, NAV — folgen ab Q3 2026 und erscheinen automatisch in dieser Auswahl, sobald sie im Backend verfügbar sind.</helpText>
+            <options>
+                <option>
+                    <id>pdf</id>
+                    <name lang="en-GB">PDF</name>
+                    <name lang="de-DE">PDF</name>
+                </option>
+                <option>
+                    <id>xrechnung</id>
+                    <name lang="en-GB">XRechnung (DE)</name>
+                    <name lang="de-DE">XRechnung (DE)</name>
+                </option>
+                <option>
+                    <id>zugferd</id>
+                    <name lang="en-GB">ZUGFeRD (DE/AT)</name>
+                    <name lang="de-DE">ZUGFeRD (DE/AT)</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>trigger</name>
+            <label lang="en-GB">Trigger</label>
+            <label lang="de-DE">Auslöser</label>
+            <defaultValue>on_completed</defaultValue>
+            <helpText lang="en-GB">Pick the order state that should trigger invoice generation. Stripe / PayPal / instant-pay → "processing" or "completed". BACS / advance bank transfer → "on hold" so the customer receives the invoice with bank details before paying. Cash on delivery → "completed". For mixed payment methods, "completed" is the safest compromise.</helpText>
+            <helpText lang="de-DE">Wählen Sie den Bestellstatus, der die Rechnungserzeugung auslösen soll. Stripe / PayPal / Sofort-Zahlung → "In Bearbeitung" oder "Abgeschlossen". Vorkasse / SEPA-Überweisung (BACS) → "Wartend", damit Ihre Kundinnen und Kunden die Rechnung mit Bankdaten vor der Zahlung erhalten. Nachnahme → "Abgeschlossen". Bei gemischten Zahlarten ist "Abgeschlossen" der sicherste Kompromiss.</helpText>
+            <options>
+                <option>
+                    <id>off</id>
+                    <name lang="en-GB">Off (manual only)</name>
+                    <name lang="de-DE">Aus (nur manuell)</name>
+                </option>
+                <option>
+                    <id>on_pending</id>
+                    <name lang="en-GB">When order is pending (rare — pre-invoice flow)</name>
+                    <name lang="de-DE">Wenn Bestellung offen ist (selten — Pro-forma-Ablauf)</name>
+                </option>
+                <option>
+                    <id>on_on_hold</id>
+                    <name lang="en-GB">When order is on hold (BACS / advance payment with bank details)</name>
+                    <name lang="de-DE">Wenn Bestellung wartend ist (Vorkasse / Überweisung mit Bankdaten)</name>
+                </option>
+                <option>
+                    <id>on_processing</id>
+                    <name lang="en-GB">When order goes to processing (Stripe / PayPal / instant-pay)</name>
+                    <name lang="de-DE">Wenn Bestellung in Bearbeitung geht (Stripe / PayPal / Sofort-Zahlung)</name>
+                </option>
+                <option>
+                    <id>on_completed</id>
+                    <name lang="en-GB">When order is completed (default — invoice on shipment)</name>
+                    <name lang="de-DE">Wenn Bestellung abgeschlossen ist (Standard — Rechnung beim Versand)</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="bool">
+            <name>attachToEmail</name>
+            <label lang="en-GB">Attach invoice to customer email</label>
+            <label lang="de-DE">Rechnung an Kunden-E-Mail anhängen</label>
+            <defaultValue>true</defaultValue>
+            <helpText lang="en-GB">When enabled, the generated invoice is attached to the order confirmation / status-change email sent by Shopware.</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, wird die erzeugte Rechnung an die von Shopware versendete Bestell- bzw. Statusänderungs-E-Mail angehängt.</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>paymentDueDays</name>
+            <label lang="en-GB">Payment due (days)</label>
+            <label lang="de-DE">Zahlungsziel (Tage)</label>
+            <defaultValue>14</defaultValue>
+            <helpText lang="en-GB">Number of days from the invoice date until the payment due date. Default 14.</helpText>
+            <helpText lang="de-DE">Anzahl der Tage zwischen Rechnungsdatum und Fälligkeit. Standard 14.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="en-GB">Invoice template</title>
+        <title lang="de-DE">Rechnungs-Template</title>
+
+        <input-field type="text">
+            <name>templateId</name>
+            <label lang="en-GB">Default Template-ID</label>
+            <label lang="de-DE">Standard-Template-ID</label>
+            <helpText lang="en-GB">Optional. Leave empty to use the standard invoice template provided by invoice-api.xhub.io. To use your own template (logo, layout, colors, content blocks), create one at https://console.invoice-api.xhub.io/pdf/templates and paste its UUID here. Templates are format-specific — a template designed for XRechnung will not work for ZUGFeRD or PDF. Per-order overrides are possible via the order custom field "invoice_api_xhub_template_id".</helpText>
+            <helpText lang="de-DE">Optional. Leer lassen, um die Standard-Vorlage von invoice-api.xhub.io zu verwenden. Um eine eigene Vorlage (Logo, Layout, Farben, Inhaltsblöcke) zu nutzen, legen Sie eine unter https://console.invoice-api.xhub.io/pdf/templates an und tragen die UUID hier ein. Vorlagen sind formatspezifisch — eine XRechnung-Vorlage funktioniert nicht für ZUGFeRD oder PDF. Pro Bestellung kann das Custom-Field "invoice_api_xhub_template_id" eine andere Vorlage erzwingen.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="en-GB">Invoice numbering</title>
+        <title lang="de-DE">Rechnungsnummerierung</title>
+
+        <input-field type="text">
+            <name>numberFormat</name>
+            <label lang="en-GB">Number format</label>
+            <label lang="de-DE">Nummernformat</label>
+            <defaultValue>INV-{order_number}</defaultValue>
+            <helpText lang="en-GB">Format string for the invoice number. Tokens: {order_number}, {order_id}, {year}, {month}, {day}, {seq}, {seq:0000} (zero-padded). For § 14 UStG (DE) compliance use {seq} or {seq:0000} — the plugin tracks a separate sequential counter that is uniquely incremented per generated invoice. Example: 2026-{seq:0000} → 2026-0001, 2026-0002, …</helpText>
+            <helpText lang="de-DE">Formatstring für die Rechnungsnummer. Platzhalter: {order_number}, {order_id}, {year}, {month}, {day}, {seq}, {seq:0000} (mit führenden Nullen). Für § 14 UStG-Konformität (DE) verwenden Sie {seq} oder {seq:0000} — das Plugin führt einen eigenen, lückenlos hochzählenden Zähler je erzeugter Rechnung. Beispiel: 2026-{seq:0000} → 2026-0001, 2026-0002, …</helpText>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>sequenceReset</name>
+            <label lang="en-GB">Sequence reset</label>
+            <label lang="de-DE">Zähler-Reset</label>
+            <defaultValue>yearly</defaultValue>
+            <helpText lang="en-GB">Determines when the {seq} counter resets. "Yearly" is recommended and aligns with most accounting practices.</helpText>
+            <helpText lang="de-DE">Legt fest, wann der {seq}-Zähler zurückgesetzt wird. "Jährlich" wird empfohlen und entspricht der gängigen Buchhaltungspraxis.</helpText>
+            <options>
+                <option>
+                    <id>yearly</id>
+                    <name lang="en-GB">Yearly (recommended)</name>
+                    <name lang="de-DE">Jährlich (empfohlen)</name>
+                </option>
+                <option>
+                    <id>monthly</id>
+                    <name lang="en-GB">Monthly</name>
+                    <name lang="de-DE">Monatlich</name>
+                </option>
+                <option>
+                    <id>never</id>
+                    <name lang="en-GB">Never (continuous counter)</name>
+                    <name lang="de-DE">Nie (fortlaufender Zähler)</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="en-GB">Seller (your business)</title>
+        <title lang="de-DE">Verkäufer (Ihr Unternehmen)</title>
+
+        <input-field type="text">
+            <name>sellerName</name>
+            <label lang="en-GB">Company name</label>
+            <label lang="de-DE">Firmenname</label>
+            <helpText lang="en-GB">Legal company name as it should appear on the invoice header.</helpText>
+            <helpText lang="de-DE">Firmenbezeichnung, wie sie im Rechnungskopf erscheinen soll.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerVatId</name>
+            <label lang="en-GB">VAT ID</label>
+            <label lang="de-DE">USt-IdNr.</label>
+            <helpText lang="en-GB">EU VAT identification number (e.g. DE123456789). Required for cross-border B2B invoices.</helpText>
+            <helpText lang="de-DE">Umsatzsteuer-Identifikationsnummer (z. B. DE123456789). Bei grenzüberschreitenden B2B-Rechnungen erforderlich.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerStreet</name>
+            <label lang="en-GB">Street</label>
+            <label lang="de-DE">Straße</label>
+            <helpText lang="en-GB">Street and house number of your business address.</helpText>
+            <helpText lang="de-DE">Straße und Hausnummer Ihrer Geschäftsadresse.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerPostalCode</name>
+            <label lang="en-GB">Postal code</label>
+            <label lang="de-DE">Postleitzahl</label>
+            <helpText lang="en-GB">Postal/ZIP code of your business address.</helpText>
+            <helpText lang="de-DE">Postleitzahl Ihrer Geschäftsadresse.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerCity</name>
+            <label lang="en-GB">City</label>
+            <label lang="de-DE">Stadt</label>
+            <helpText lang="en-GB">City of your business address.</helpText>
+            <helpText lang="de-DE">Stadt Ihrer Geschäftsadresse.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerCountryCode</name>
+            <label lang="en-GB">Country code (ISO 3166-1 alpha-2)</label>
+            <label lang="de-DE">Ländercode (ISO 3166-1 alpha-2)</label>
+            <defaultValue>DE</defaultValue>
+            <helpText lang="en-GB">Two-letter ISO country code of your business address (e.g. DE, AT, CH).</helpText>
+            <helpText lang="de-DE">Zweistelliger ISO-Ländercode Ihrer Geschäftsadresse (z. B. DE, AT, CH).</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerEmail</name>
+            <label lang="en-GB">Email</label>
+            <label lang="de-DE">E-Mail</label>
+            <helpText lang="en-GB">Business email shown on the invoice for queries and remittance.</helpText>
+            <helpText lang="de-DE">Geschäfts-E-Mail, die auf der Rechnung für Rückfragen und Zahlungsavise angegeben wird.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerPhone</name>
+            <label lang="en-GB">Phone</label>
+            <label lang="de-DE">Telefon</label>
+            <helpText lang="en-GB">Required by some country profiles (e.g. XRechnung B2G). Format: +49 30 1234567 — international notation recommended.</helpText>
+            <helpText lang="de-DE">Bei manchen Länderprofilen erforderlich (z. B. XRechnung B2G). Format: +49 30 1234567 — internationale Schreibweise empfohlen.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="en-GB">Payment / bank details</title>
+        <title lang="de-DE">Zahlung / Bankverbindung</title>
+
+        <input-field type="text">
+            <name>sellerIban</name>
+            <label lang="en-GB">IBAN</label>
+            <label lang="de-DE">IBAN</label>
+            <helpText lang="en-GB">Optional. Used for BACS / bank-transfer payment so the customer receives the invoice with IBAN and BIC. If left empty, the plugin tries to read these from the active Shopware payment methods.</helpText>
+            <helpText lang="de-DE">Optional. Wird für Vorkasse / Überweisung verwendet, damit Ihre Kundinnen und Kunden die Rechnung mit IBAN und BIC erhalten. Bleibt das Feld leer, versucht das Plugin, die Werte aus den aktiven Shopware-Zahlarten zu übernehmen.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerBic</name>
+            <label lang="en-GB">BIC</label>
+            <label lang="de-DE">BIC</label>
+            <helpText lang="en-GB">Bank Identifier Code (SWIFT). Required alongside IBAN for international transfers.</helpText>
+            <helpText lang="de-DE">Bank Identifier Code (SWIFT). Wird zusammen mit der IBAN für internationale Überweisungen benötigt.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerBankName</name>
+            <label lang="en-GB">Bank name</label>
+            <label lang="de-DE">Name der Bank</label>
+            <helpText lang="en-GB">Name of the bank as it should appear on the invoice payment block.</helpText>
+            <helpText lang="de-DE">Name der Bank, wie er im Zahlungsblock der Rechnung erscheinen soll.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>sellerAccountHolder</name>
+            <label lang="en-GB">Account holder</label>
+            <label lang="de-DE">Kontoinhaber</label>
+            <helpText lang="en-GB">Name of the account holder. Often identical to the company name; provide explicitly if it differs.</helpText>
+            <helpText lang="de-DE">Name des Kontoinhabers. Oft identisch mit dem Firmennamen; bei Abweichung bitte explizit angeben.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="en-GB">Country specific (DE)</title>
+        <title lang="de-DE">Länderspezifisch (DE)</title>
+
+        <input-field type="text">
+            <name>defaultLeitwegId</name>
+            <label lang="en-GB">Default Leitweg-ID</label>
+            <label lang="de-DE">Standard-Leitweg-ID</label>
+            <helpText lang="en-GB">Used by XRechnung for B2G (public sector). Format 991-12345-67. Leave empty for B2B — the order number is then used as buyer reference.</helpText>
+            <helpText lang="de-DE">Wird von XRechnung für B2G (öffentliche Hand) verwendet. Format 991-12345-67. Für B2B leer lassen — dann wird die Bestellnummer als Käuferreferenz genutzt.</helpText>
+        </input-field>
+    </card>
+
+</config>

@@ -1,0 +1,38 @@
+{
+    "invoice-api-xhub": {
+        "module": {
+            "title": "Invoice-api.xhub",
+            "description": "E-Rechnungs-Erzeugung"
+        },
+        "tab": {
+            "label": "Invoice-api.xhub"
+        },
+        "actions": {
+            "title": "Rechnungs-Aktionen",
+            "regenerate": "Rechnung erneut erzeugen",
+            "download": "Herunterladen",
+            "regenerateInProgress": "Wird erzeugt...",
+            "regenerateSuccess": "Rechnung erfolgreich erzeugt.",
+            "regenerateError": "Erzeugung fehlgeschlagen: {{message}}",
+            "downloadFailed": "Download fehlgeschlagen.",
+            "noInvoiceYet": "Noch keine Rechnung erzeugt.",
+            "lastError": "Letzter Fehler",
+            "filename": "Dateiname",
+            "generatedAt": "Erzeugt am"
+        },
+        "logs": {
+            "title": "Verlauf",
+            "empty": "Noch keine Einträge im Verlauf.",
+            "emptySubline": "Sobald Rechnungen für diese Bestellung erzeugt werden, erscheinen sie hier.",
+            "refresh": "Aktualisieren",
+            "col": {
+                "timestamp": "Zeitpunkt",
+                "action": "Aktion",
+                "format": "Format",
+                "status": "Status",
+                "filename": "Datei",
+                "message": "Details"
+            }
+        }
+    }
+}

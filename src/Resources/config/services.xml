@@ -1,0 +1,147 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <defaults autowire="true" autoconfigure="true" public="false"/>
+
+        <!--
+            HTTP wrapper for invoice-api.xhub.io. Constructor needs the
+            Symfony HttpClient (registered as `Symfony\Contracts\HttpClient\HttpClientInterface`
+            in Shopware's container) and a PSR-3 logger. Both are autowireable
+            but we list them explicitly so the wiring is documented.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\ApiClient">
+            <argument type="service" id="Symfony\Contracts\HttpClient\HttpClientInterface"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+
+        <!--
+            Private filesystem (Flysystem) for storing generated invoice
+            artefacts under files/invoice-api-xhub/<orderId>/<filename>.
+            Shopware exposes the private filesystem as a service under the id
+            `shopware.filesystem.private`.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage">
+            <argument type="service" id="shopware.filesystem.private"/>
+        </service>
+
+        <!--
+            Atomic gap-free invoice-number allocator. Uses Doctrine\DBAL\Connection
+            for the LAST_INSERT_ID(expr) trick + PSR-3 logger for error context.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\InvoiceNumberService">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+
+        <!--
+            Template-id resolver. No constructor dependencies — it is a pure
+            function over (OrderEntity, config-array). Listed here for
+            visibility; the autowire defaults would also pick it up.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\TemplateResolver"/>
+
+        <!--
+            OrderMapper translates a Shopware OrderEntity into the invoice
+            JSON shape required by invoice-api.xhub.io. Depends on the
+            number-service (atomic seq + token expansion) and the template
+            resolver (per-order override resolution).
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\OrderMapper">
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceNumberService"/>
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\TemplateResolver"/>
+        </service>
+
+        <!--
+            InvoiceGenerator — orchestrator equivalent of the WooCommerce
+            Order_Handler::generate_for_order(). Single entry point used by
+            the EventSubscribers (auto), the Messenger handler (off-thread),
+            and the admin controller (manual). Depends on the full Wave 2
+            service set plus Shopware's order.repository for persisting
+            result/error to order custom fields.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\InvoiceGenerator">
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\ApiClient"/>
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\OrderMapper"/>
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\TemplateResolver"/>
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+
+        <!--
+            PrivacyService — DSGVO eraser. Wipes invoice_api_xhub_* custom
+            fields and deletes the per-order file directory when a customer
+            is removed (or when triggered manually from admin).
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Service\PrivacyService">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+
+        <!--
+            OrderStateSubscriber — listens for StateMachineTransitionEvent on
+            the `order` entity and dispatches GenerateInvoiceMessage to the
+            Shopware Messenger bus when the configured trigger state matches.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Subscriber\OrderStateSubscriber">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="messenger.bus.default"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!--
+            OrderRefundedSubscriber — listens for StateMachineTransitionEvent
+            on the `order_transaction` entity for refunded / refunded_partially
+            and dispatches a credit-note generate.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Subscriber\OrderRefundedSubscriber">
+            <argument type="service" id="messenger.bus.default"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!--
+            PrivacyEventSubscriber — bridges Shopware's `customer.deleted`
+            DAL event to PrivacyService::eraseForCustomerIds(). Catches all
+            throwables so a failing wipe never aborts the customer-delete
+            transaction.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Subscriber\PrivacyEventSubscriber">
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\PrivacyService"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!--
+            GenerateInvoiceHandler — Symfony Messenger handler that runs the
+            InvoiceGenerator off-thread. Tagged as messenger.message_handler
+            in addition to the #[AsMessageHandler] attribute so the wiring
+            also works on Shopware versions where attribute autoconfig isn't
+            picked up by the plugin loader.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\MessageQueue\GenerateInvoiceHandler">
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceGenerator"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <!--
+            Admin REST controller exposing /api/_action/invoice-api-xhub/* for
+            the Vue.js admin module (regenerate, download, logs). Must be
+            `public="true"` so Symfony's controller resolver can fetch it from
+            the container. The class is a plain controller (no AbstractController
+            extend), so no setContainer() call is needed here.
+        -->
+        <service id="Xhubio\InvoiceApiXhub\Controller\Admin\InvoiceController" public="true">
+            <argument type="service" id="messenger.bus.default"/>
+            <argument type="service" id="Xhubio\InvoiceApiXhub\Service\InvoiceFileStorage"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Psr\Log\LoggerInterface"/>
+        </service>
+    </services>
+</container>
